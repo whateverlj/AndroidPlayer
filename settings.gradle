@@ -1,0 +1,3 @@
+rootProject.name='AndroidPlayer'
+include ':app'
+include ':ffmpeg'
