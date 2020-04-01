@@ -7,12 +7,13 @@
 Audio::Audio(PlayStatus * playStatus,int sampleRate) {
    this->sampleRate = sampleRate;
     this->playstatus = playStatus;
-    queue = new PacketQueue(playstatus);
+    packetQueue = new PacketQueue(playstatus);
     buffer = (uint8_t *) av_malloc(sampleRate * 2 * 2);
+    pthread_mutex_init(&codecMutex, NULL);
 }
 
 Audio::~Audio() {
-
+    pthread_mutex_destroy(&codecMutex);
 }
 
 void *decodPlay(void *data)
@@ -31,13 +32,14 @@ int Audio::reSampleAudio() {
     {
         avPacket = av_packet_alloc();
         //获取解码后的数据
-        if(queue->getAvpacket(avPacket) != 0)
+        if(packetQueue->getAvpacket(avPacket) != 0)
         {
             av_packet_free(&avPacket);
             av_free(avPacket);
             avPacket = NULL;
             continue;
         }
+        pthread_mutex_lock(&codecMutex);
         // 数据传递给解码器上下文
         ret = avcodec_send_packet(avCodecContext, avPacket);
         if(ret != 0)
@@ -45,6 +47,7 @@ int Audio::reSampleAudio() {
             av_packet_free(&avPacket);
             av_free(avPacket);
             avPacket = NULL;
+            pthread_mutex_unlock(&codecMutex);
             continue;
         }
         avFrame = av_frame_alloc();
@@ -82,6 +85,7 @@ int Audio::reSampleAudio() {
                 av_free(avFrame);
                 avFrame = NULL;
                 swr_free(&swr_ctx);
+                pthread_mutex_unlock(&codecMutex);
                 continue;
             }
             // 转换成 pcm buffer
@@ -94,7 +98,12 @@ int Audio::reSampleAudio() {
 
             int out_channels = av_get_channel_layout_nb_channels(AV_CH_LAYOUT_STEREO);
             data_size = nb * out_channels * av_get_bytes_per_sample(AV_SAMPLE_FMT_S16);
-//            loge("data_size is %d", data_size);
+            now_time = avFrame->pts * av_q2d(time_base);
+            if(now_time < clock)
+            {
+                now_time = clock;
+            }
+            clock = now_time;
             // 回收
             av_packet_free(&avPacket);
             av_free(avPacket);
@@ -103,6 +112,7 @@ int Audio::reSampleAudio() {
             av_free(avFrame);
             avFrame = NULL;
             swr_free(&swr_ctx);
+            pthread_mutex_unlock(&codecMutex);
             break;
         } else{
             // 回收
@@ -112,6 +122,7 @@ int Audio::reSampleAudio() {
             av_frame_free(&avFrame);
             av_free(avFrame);
             avFrame = NULL;
+            pthread_mutex_unlock(&codecMutex);
             continue;
         }
     }
@@ -124,6 +135,7 @@ void pcmBufferCallBack(SLAndroidSimpleBufferQueueItf bf,void * context)
     if(audio != NULL)
     {
         int buffersize = audio->reSampleAudio();
+        audio->clock += buffersize / ((double)(audio->sampleRate * 2 * 2));
         if(buffersize > 0)
         {
             (* audio-> pcmBufferQueue)->Enqueue( audio->pcmBufferQueue, (char *) audio-> buffer, buffersize);

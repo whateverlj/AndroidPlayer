@@ -21,7 +21,7 @@ public:
     AVCodecParameters *avCodecParameters = NULL;
     AVCodecContext * avCodecContext = NULL;
     PlayStatus * playstatus = NULL;
-    PacketQueue *queue = NULL;
+    PacketQueue *packetQueue = NULL;
 
     pthread_t thread_play;
     AVPacket *avPacket = NULL;
@@ -29,7 +29,10 @@ public:
     int ret = 0;
     uint8_t *buffer = NULL;
     int data_size = 0;
-
+    AVRational time_base;
+    double clock ;
+    double now_time;//当前帧时间
+    pthread_mutex_t codecMutex;
     // 引擎接口
     SLObjectItf engineObject = NULL;
     SLEngineItf engineEngine = NULL;

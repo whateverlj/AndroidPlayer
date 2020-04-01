@@ -1,38 +1,36 @@
 package com.example.androidplayer;
 
 import android.os.Bundle;
-import android.os.Environment;
 import android.view.View;
 import android.widget.Button;
-import android.widget.TextView;
 
 import com.example.ffmpeg.FFmpeg;
-
-import java.io.File;
+import com.example.ffmpeg.opengl.MyGLSurfaceView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
 public class MainActivity extends AppCompatActivity {
 
-
+    private MyGLSurfaceView myGLSurfaceView;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         Button btn = (Button) findViewById(R.id.btn);
-        FFmpeg.initAvCodec(Environment.getExternalStorageDirectory() + File.separator + "C100000eMyjZ3rDX25.m4a");
+        final FFmpeg ffmpeg = new FFmpeg();
+        ffmpeg.initAvCodec("http://vfx.mtime.cn/Video/2019/03/19/mp4/190319212559089721.mp4");
         btn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 new Thread(new Runnable() {
                     @Override
                     public void run() {
-                        FFmpeg.startPlay();
+                        ffmpeg.startPlay();
                     }
                 }).start();
             }
         });
-
-
+        myGLSurfaceView = findViewById(R.id.myglsurfaceview);
+        ffmpeg.setMyGLSurfaceView(myGLSurfaceView);
     }
 }

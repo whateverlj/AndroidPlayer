@@ -11,13 +11,13 @@ PacketQueue::PacketQueue(PlayStatus *playstatus) {
 }
 
 PacketQueue::~PacketQueue() {
-
+    pthread_mutex_destroy(&mutexPacket);
+    pthread_cond_destroy(&condPacket);
 }
 
 int PacketQueue::putAvpacket(AVPacket *packet) {
     pthread_mutex_lock(&mutexPacket);
     packetQueue.push(packet);
-    logd("放入一个AVpacket到队里面， 个数为：%d", packetQueue.size());
     pthread_cond_signal(&condPacket);
     pthread_mutex_unlock(&mutexPacket);
     return 0;

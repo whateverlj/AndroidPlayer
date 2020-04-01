@@ -2,12 +2,18 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    >
+    android:orientation="vertical">
 
-   <Button
-       android:id="@+id/btn"
+   <com.example.ffmpeg.opengl.MyGLSurfaceView
+       android:id="@+id/myglsurfaceview"
        android:layout_width="match_parent"
-       android:layout_height="wrap_content"
-       android:text="解码器初始化"></Button>
+       android:layout_height="250dp"></com.example.ffmpeg.opengl.MyGLSurfaceView>
+    <Button
+        android:layout_marginTop="30dp"
+        android:id="@+id/btn"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="播放"></Button>
+
 
 </LinearLayout>

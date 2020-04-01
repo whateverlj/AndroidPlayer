@@ -10,6 +10,7 @@
 #include "Audio.h"
 #include "pthread.h"
 #include "PacketQueue.h"
+#include "Video.h"
 
 extern "C"
 {
@@ -20,22 +21,26 @@ extern "C"
 class FFmpegHandle {
 
 public:
-    pthread_t  initAcodecThread = NULL;
+    pthread_t  initAcodecThread;
 
     const char *cSource = NULL;
     AVFormatContext *avFormatContext = NULL;
     Audio *audio = NULL;
     PlayStatus *playstatus = NULL;
     PacketQueue packetQueue = NULL;
+    CallJava *callJava = NULL;
+
+    Video *video = NULL;
 
 public:
-    FFmpegHandle(const char *cSource,PlayStatus * playStatus);
+    FFmpegHandle(const char *cSource,PlayStatus * playStatus,CallJava *callJava );
     ~FFmpegHandle();
 
 public:
     void initAvCodec();
     void prepare();
     void startPlay();
+    void avcodecContextInit(AVCodecParameters *avCodecParameters,AVCodecContext ** avCodecContext );
 
 
 };

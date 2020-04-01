@@ -10,7 +10,9 @@ add_library(
         src/main/cpp/FFmpegHandle.cpp
         src/main/cpp/Audio.cpp
         src/main/cpp/PlayStatus.cpp
-        src/main/cpp/PacketQueue.cpp)
+        src/main/cpp/PacketQueue.cpp
+        src/main/cpp/Video.cpp
+        src/main/cpp/CallJava.cpp)
 
 add_library( avcodec-57 SHARED IMPORTED)
 set_target_properties( avcodec-57
