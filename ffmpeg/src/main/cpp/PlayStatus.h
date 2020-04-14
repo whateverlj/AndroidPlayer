@@ -11,6 +11,8 @@ class PlayStatus {
 
 public:
     bool exit;
+    bool pause;
+    bool seek ;
 public:
     PlayStatus();
     ~PlayStatus();

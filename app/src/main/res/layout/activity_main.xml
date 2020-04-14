@@ -4,16 +4,97 @@
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-   <com.example.ffmpeg.opengl.MyGLSurfaceView
-       android:id="@+id/myglsurfaceview"
-       android:layout_width="match_parent"
-       android:layout_height="250dp"></com.example.ffmpeg.opengl.MyGLSurfaceView>
-    <Button
-        android:layout_marginTop="30dp"
-        android:id="@+id/btn"
+
+
+    <RelativeLayout
+        android:id="@+id/rl"
+        android:layout_width="match_parent"
+        android:layout_height="600px">
+
+
+        <com.example.ffmpeg.opengl.MyGLSurfaceView
+            android:id="@+id/myglsurfaceview"
+            android:layout_width="match_parent"
+            android:layout_height="600px"></com.example.ffmpeg.opengl.MyGLSurfaceView>
+        <androidx.core.widget.ContentLoadingProgressBar
+            android:id="@+id/progressBar"
+            android:layout_width="100px"
+            android:layout_centerInParent="true"
+            style="?android:attr/progressBarStyleSmall"
+            android:visibility="gone"
+            android:layout_height="100px">
+        </androidx.core.widget.ContentLoadingProgressBar>
+
+        <LinearLayout
+            android:layout_alignParentBottom="true"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            >
+            <TextView
+                android:id="@+id/time"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@android:color/white"
+                android:layout_gravity="center"
+                android:textSize="15sp"
+                android:text="00:00/00:00"></TextView>
+            <SeekBar
+                android:id="@+id/seekbar"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_alignParentBottom="true"
+                android:padding="10dp"></SeekBar>
+
+        </LinearLayout>
+
+    </RelativeLayout>
+
+    <LinearLayout
+        android:layout_marginTop="10dp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="播放"></Button>
+        android:orientation="horizontal">
+        <Button
+            android:id="@+id/start_btn"
+            android:layout_width="0dp"
+            android:layout_margin="10dp"
+            android:layout_height="wrap_content"
+            android:background="@android:color/holo_blue_light"
+            android:textColor="@android:color/white"
+            android:layout_weight="1"
+            android:layout_below="@id/rl"
+            android:text="开始"></Button>
+        <Button
+            android:id="@+id/resume_btn"
+            android:layout_width="0dp"
+            android:layout_margin="10dp"
+            android:layout_height="wrap_content"
+            android:background="@android:color/holo_blue_light"
+            android:textColor="@android:color/white"
+            android:layout_weight="1"
+            android:layout_below="@id/rl"
+            android:text="播放"></Button>
+        <Button
+            android:id="@+id/pause_btn"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_margin="10dp"
+            android:layout_weight="1"
+            android:background="@android:color/holo_blue_light"
+            android:textColor="@android:color/white"
+            android:layout_below="@id/rl"
+            android:text="暂停"></Button>
 
-
+        <Button
+            android:id="@+id/stop_btn"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_margin="10dp"
+            android:layout_weight="1"
+            android:background="@android:color/holo_blue_light"
+            android:textColor="@android:color/white"
+            android:layout_below="@id/rl"
+            android:text="停止"></Button>
+    </LinearLayout>
 </LinearLayout>

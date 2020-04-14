@@ -13,6 +13,7 @@ extern "C"{
 };
 #include "PlayStatus.h"
 #include "PacketQueue.h"
+#include "CallJava.h"
 
 class Audio {
 public:
@@ -22,7 +23,8 @@ public:
     AVCodecContext * avCodecContext = NULL;
     PlayStatus * playstatus = NULL;
     PacketQueue *packetQueue = NULL;
-
+    CallJava * callJava = NULL;
+    int duration = 0;
     pthread_t thread_play;
     AVPacket *avPacket = NULL;
     AVFrame *avFrame = NULL;
@@ -32,6 +34,7 @@ public:
     AVRational time_base;
     double clock ;
     double now_time;//当前帧时间
+    double last_time; //上一次调用时间
     pthread_mutex_t codecMutex;
     // 引擎接口
     SLObjectItf engineObject = NULL;
@@ -46,12 +49,15 @@ public:
     //缓冲器队列接口
     SLAndroidSimpleBufferQueueItf pcmBufferQueue = NULL;
 public:
-    Audio(PlayStatus * playStatus,int sampleRate);
+    Audio(PlayStatus * playStatus,int sampleRate, CallJava *callJava);
     ~Audio();
 
     void play();
     int reSampleAudio();
     void initOpenSL();
+    void pausePlay();
+    void resumePlay();
+    void release();
     uint getCurrentSampleRateForOpensles(int sample_rate);
 };
 

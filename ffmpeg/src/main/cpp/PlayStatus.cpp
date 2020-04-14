@@ -6,4 +6,10 @@
 
 PlayStatus::PlayStatus() {
     exit = false;
+    pause = false;
+    seek = false;
+}
+
+PlayStatus::~PlayStatus() {
+
 }

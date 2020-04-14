@@ -2,11 +2,13 @@
 // Created by Administrator on 2020/3/22.
 //
 
+#include <libavutil/time.h>
 #include "Audio.h"
 
-Audio::Audio(PlayStatus * playStatus,int sampleRate) {
+Audio::Audio(PlayStatus * playStatus,int sampleRate, CallJava *callJava) {
    this->sampleRate = sampleRate;
     this->playstatus = playStatus;
+    this->callJava = callJava;
     packetQueue = new PacketQueue(playstatus);
     buffer = (uint8_t *) av_malloc(sampleRate * 2 * 2);
     pthread_mutex_init(&codecMutex, NULL);
@@ -20,7 +22,7 @@ void *decodPlay(void *data)
 {
     Audio *waudio = (Audio *) data;
     waudio->initOpenSL();
-    pthread_exit(&waudio->thread_play);
+    return 0;
 }
 
 void Audio::play() {
@@ -30,6 +32,14 @@ void Audio::play() {
 int Audio::reSampleAudio() {
     while(playstatus != NULL && !playstatus->exit)
     {
+        if(playstatus->seek)
+        {
+            continue;
+        }
+        if(packetQueue->getQueueSize() == 0)//加载中
+        {
+            continue;
+        }
         avPacket = av_packet_alloc();
         //获取解码后的数据
         if(packetQueue->getAvpacket(avPacket) != 0)
@@ -135,9 +145,14 @@ void pcmBufferCallBack(SLAndroidSimpleBufferQueueItf bf,void * context)
     if(audio != NULL)
     {
         int buffersize = audio->reSampleAudio();
-        audio->clock += buffersize / ((double)(audio->sampleRate * 2 * 2));
         if(buffersize > 0)
         {
+            audio->clock += buffersize / ((double)(audio->sampleRate * 2 * 2));
+            if(audio->clock - audio->last_time >= 0.1)
+            {
+                audio->last_time = audio->clock;
+                audio->callJava->onCallTimeInfo(CHILD_THREAD, audio->clock, audio->duration);
+            }
             (* audio-> pcmBufferQueue)->Enqueue( audio->pcmBufferQueue, (char *) audio-> buffer, buffersize);
         }
     }
@@ -182,19 +197,21 @@ void Audio::initOpenSL() {
     SLDataSource slDataSource = {&android_queue, &pcm};
 
 
-    const SLInterfaceID ids[1] = {SL_IID_BUFFERQUEUE};
-    const SLboolean req[1] = {SL_BOOLEAN_TRUE};
+    const SLInterfaceID ids[2] = {SL_IID_BUFFERQUEUE, SL_IID_PLAYBACKRATE};
+    const SLboolean req[2] = {SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE};
 
-    (*engineEngine)->CreateAudioPlayer(engineEngine, &pcmPlayerObject, &slDataSource, &audioSnk, 1, ids, req);
+    (*engineEngine)->CreateAudioPlayer(engineEngine, &pcmPlayerObject, &slDataSource, &audioSnk, 2, ids, req);
     //初始化播放器
     (*pcmPlayerObject)->Realize(pcmPlayerObject, SL_BOOLEAN_FALSE);
-    // 得到接口后调用  获取Player接口
+
+//    得到接口后调用  获取Player接口
     (*pcmPlayerObject)->GetInterface(pcmPlayerObject, SL_IID_PLAY, &pcmPlayerPlay);
-    //注册回调缓冲区 获取缓冲队列接口
+
+//    注册回调缓冲区 获取缓冲队列接口
     (*pcmPlayerObject)->GetInterface(pcmPlayerObject, SL_IID_BUFFERQUEUE, &pcmBufferQueue);
     //缓冲接口回调
     (*pcmBufferQueue)->RegisterCallback(pcmBufferQueue, pcmBufferCallBack, this);
-    // 获取播放状态接口
+//    获取播放状态接口
     (*pcmPlayerPlay)->SetPlayState(pcmPlayerPlay, SL_PLAYSTATE_PLAYING);
     pcmBufferCallBack(pcmBufferQueue, this);
 }
@@ -247,4 +264,85 @@ uint Audio::getCurrentSampleRateForOpensles(int sample_rate) {
             rate =  SL_SAMPLINGRATE_44_1;
     }
     return rate;
+}
+
+/**
+ * 停止播放音频
+ */
+void Audio::pausePlay() {
+    if(pcmPlayerPlay != NULL)
+    {
+        (*pcmPlayerPlay)->SetPlayState(pcmPlayerPlay,  SL_PLAYSTATE_PAUSED);
+    }
+}
+/**
+ * 恢复播放音频
+ */
+void Audio::resumePlay() {
+    if(pcmPlayerPlay != NULL)
+    {
+        (*pcmPlayerPlay)->SetPlayState(pcmPlayerPlay,  SL_PLAYSTATE_PLAYING);
+    }
+}
+
+/**
+ * 释放
+ */
+void Audio::release() {
+    if(packetQueue != NULL)
+    {
+        packetQueue->noticeQueue();
+    }
+    pthread_join(thread_play, NULL);
+    loge("释放 audio");
+    if(packetQueue != NULL)
+    {
+        delete(packetQueue);
+        packetQueue = NULL;
+    }
+    loge("释放 audio");
+//    if(pcmPlayerObject != NULL)
+//    {
+//        (*pcmPlayerObject)->Destroy(pcmPlayerObject);
+//        loge("释放 audio");
+//        pcmPlayerObject = NULL;
+//        pcmPlayerPlay = NULL;
+//        pcmBufferQueue = NULL;
+//    }
+    loge("释放 audio");
+    if(outputMixObject != NULL)
+    {
+        (*outputMixObject)->Destroy(outputMixObject);
+        outputMixObject = NULL;
+        outputMixEnvironmentalReverb = NULL;
+    }
+    loge("释放 audio");
+    if(engineObject != NULL)
+    {
+        (*engineObject)->Destroy(engineObject);
+        engineObject = NULL;
+        engineEngine = NULL;
+    }
+
+    if(buffer != NULL)
+    {
+        free(buffer);
+        buffer = NULL;
+    }
+
+    if(avCodecContext != NULL)
+    {
+        avcodec_close(avCodecContext);
+        avcodec_free_context(&avCodecContext);
+        avCodecContext = NULL;
+    }
+
+    if(playstatus != NULL)
+    {
+        playstatus = NULL;
+    }
+    if(callJava != NULL)
+    {
+        callJava = NULL;
+    }
 }

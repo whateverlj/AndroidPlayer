@@ -13,6 +13,7 @@ PacketQueue::PacketQueue(PlayStatus *playstatus) {
 PacketQueue::~PacketQueue() {
     pthread_mutex_destroy(&mutexPacket);
     pthread_cond_destroy(&condPacket);
+    clearAvpacket();
 }
 
 int PacketQueue::putAvpacket(AVPacket *packet) {
@@ -46,6 +47,25 @@ int PacketQueue::getAvpacket(AVPacket *packet) {
     return 0;
 }
 
+/**
+ * 清理packet
+ */
+void PacketQueue::clearAvpacket() {
+    pthread_cond_signal(&condPacket);
+    pthread_mutex_unlock(&mutexPacket);
+
+    while (!packetQueue.empty())
+    {
+        AVPacket *packet = packetQueue.front();
+        packetQueue.pop();
+        av_packet_free(&packet);
+        av_free(packet);
+        packet = NULL;
+    }
+    pthread_mutex_unlock(&mutexPacket);
+
+}
+
 int PacketQueue::getQueueSize() {
 
     int size = 0;
@@ -54,3 +74,8 @@ int PacketQueue::getQueueSize() {
     pthread_mutex_unlock(&mutexPacket);
     return size;
 }
+
+void PacketQueue::noticeQueue() {
+    pthread_cond_signal(&condPacket);
+}
+

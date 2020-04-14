@@ -18,12 +18,25 @@ public class MyGLSurfaceView extends GLSurfaceView {
         wlRender = new MyRender(context);
         setRenderer(wlRender);
         setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
+
+        wlRender.setOnRenderListener(new MyRender.OnRenderListener() {
+            @Override
+            public void onRender() {
+                requestRender();
+            }
+        });
     }
 
-    public void setYUVData(int width, int height, byte[] y, byte[] u, byte[] v) {
-        if (wlRender != null) {
+    public void setYUVData(int width, int height, byte[] y, byte[] u, byte[] v)
+    {
+        if(wlRender != null)
+        {
             wlRender.setYUVRenderData(width, height, y, u, v);
             requestRender();
         }
+    }
+
+    public MyRender getWlRender() {
+        return wlRender;
     }
 }

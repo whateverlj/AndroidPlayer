@@ -22,16 +22,18 @@ class FFmpegHandle {
 
 public:
     pthread_t  initAcodecThread;
-
     const char *cSource = NULL;
     AVFormatContext *avFormatContext = NULL;
     Audio *audio = NULL;
     PlayStatus *playstatus = NULL;
-    PacketQueue packetQueue = NULL;
     CallJava *callJava = NULL;
-
+    pthread_mutex_t init_mutex;
     Video *video = NULL;
-
+    bool isExit = false;
+    int duration = 0;
+    pthread_mutex_t seek_mutex;
+    bool supportMediacodec = false;
+    const AVBitStreamFilter *bsFilter = NULL;
 public:
     FFmpegHandle(const char *cSource,PlayStatus * playStatus,CallJava *callJava );
     ~FFmpegHandle();
@@ -41,8 +43,10 @@ public:
     void prepare();
     void startPlay();
     void avcodecContextInit(AVCodecParameters *avCodecParameters,AVCodecContext ** avCodecContext );
-
-
+    void pausePlay();
+    void resumePlay();
+    void stopPlay();
+    void seek(int64_t secds);
 };
 
 

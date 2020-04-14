@@ -17,6 +17,8 @@ extern "C"{
 #include "CallJava.h"
 #include "Audio.h"
 
+#define CODEC_YUV 0
+#define CODEC_MEDIACODEC 1
 class Video {
 
 public:
@@ -33,14 +35,16 @@ public:
     double delayTime = 0;
     double defaultDelayTime = 0.04;
     pthread_mutex_t mutex ;
-
+    AVBSFContext *abs_ctx = NULL;
+    int codecType = CODEC_YUV;
 public:
     Video(PlayStatus *plastatus, CallJava *callJava);
     ~Video();
 
     void play();
-    double getFrameDiffTime(AVFrame *avFrame);
+    double getFrameDiffTime(AVFrame *avFrame, AVPacket *avPacket);
     double getDelayTime(double distance);
+    void release();
 
 };
 
